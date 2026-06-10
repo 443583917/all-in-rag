@@ -9,9 +9,9 @@ load_dotenv()
 
 # 使用 AIHubmix
 Settings.llm = OpenAILike(
-    model="glm-4.7-flash-free",
-    api_key=os.getenv("DEEPSEEK_API_KEY"),
-    api_base="https://aihubmix.com/v1",
+    model="mimo-v2-flash",
+    api_key="sk-ct6ct1y17ry3m9xh2rce3bbx68kbsqs19y326ym89hxw2k64",
+    base_url="https://api.xiaomimimo.com/v1",
     is_chat_model=True
 )
 

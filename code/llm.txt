@@ -1,0 +1,14 @@
+llm = ChatOpenAI(
+    temperature=0.7,# 创造性
+    max_tokens=4096,# 最大输出 越小越快
+    model="mimo-v2-flash",
+    api_key="sk-ct6ct1y17ry3m9xh2rce3bbx68kbsqs19y326ym89hxw2k64",
+    base_url="https://api.xiaomimimo.com/v1",
+)
+
+
+llm = ChatOpenAI(
+    model="deepseek-v4-flash",
+    api_key="sk-9313dd143f1f4555a92f300c0576604f",
+    base_url="https://api.deepseek.com",
+)

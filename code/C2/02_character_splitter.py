@@ -1,14 +1,15 @@
-from langchain.text_splitter import CharacterTextSplitter
+from langchain_text_splitters import CharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
-
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 # 1. 文档加载
-loader = TextLoader("../../data/C2/txt/蜂医.txt", encoding="utf-8")
+loader = TextLoader(r"D:\GitHub\all-in-rag\data\C2\txt\蜂医.txt", encoding="utf-8")
 docs = loader.load()
 
-# 2. 初始化固定大小分块器
-text_splitter = CharacterTextSplitter(
-    chunk_size=200,    # 每个块的大小
-    chunk_overlap=10   # 块之间的重叠大小
+# 2. 初始化固定大小分块器 和RecursiveCharacterTextSplitter() 一样分词的
+# CharacterTextSplitter更公式化RecursiveCharacterTextSplitter更智能优先保持语义完整。
+text_splitter = RecursiveCharacterTextSplitter(
+    chunk_size=250,    # 每个块的大小
+    chunk_overlap=30   # 块之间的重叠大小
 )
 
 # 3. 执行分块
