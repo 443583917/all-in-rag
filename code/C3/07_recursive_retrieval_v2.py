@@ -5,17 +5,22 @@ from llama_index.core import VectorStoreIndex, Document, Settings
 from llama_index.core.retrievers import VectorIndexRetriever
 from llama_index.core.query_engine import RetrieverQueryEngine
 from llama_index.core.vector_stores import MetadataFilters, ExactMatchFilter
-from llama_index.llms.deepseek import DeepSeek
+from llama_index.llms.openai import OpenAI
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
-
 load_dotenv()
 
 # 配置模型
-Settings.llm = DeepSeek(model="deepseek-chat", api_key=os.getenv("DEEPSEEK_API_KEY"))
+Settings.llm = OpenAI(
+    temperature=0.1,# 创造性
+    max_tokens=4096,# 最大输出 越小越快
+    model="mimo-v2-flash",
+    api_key="sk-ct6ct1y17ry3m9xh2rce3bbx68kbsqs19y326ym89hxw2k64",
+    base_url="https://api.xiaomimimo.com/v1",
+)
 Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-zh-v1.5")
 
 # 1. 加载和预处理数据
-excel_file = '../../data/C3/excel/movie.xlsx'
+excel_file = r'D:\GitHub\all-in-rag\data\C3\excel\movie.xlsx'
 xls = pd.ExcelFile(excel_file)
 
 summary_docs = []
@@ -99,3 +104,12 @@ query = "1994年评分人数最少的电影是哪一部？"
 response = query_safe_recursive(query)
 
 print(f"最终回答: {response}")
+
+
+# xslx 文件作为知识库数据的处理流程
+# 1.数据加载 xls = pd.ExcelFile(excel_file) xls中的每个sheet创建路由摘要 构建摘要索引
+# 2.数据清洗 去除无用字符，处理缺失值、重复值。保证每个字段都能被检索和计算
+# 3.将每行数据转换为一个Document
+# 4.使用embedding将Document转换为向量
+# 5.存储到向量数据库（FAISS、Milvus)
+# 6.可以按需要也为内容创建对应索引

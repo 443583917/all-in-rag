@@ -37,12 +37,13 @@ chunks = text_splitter.split_documents(docs)
 # embedding(嵌入)把自然语言变成一个“能被计算机理解的数字向量”
 # 相似的句子 → 向量距离更近,不相似的句子 → 距离更远 这就是语义搜索的基础.
 embeddings = HuggingFaceEmbeddings( # HuggingFaceEmbeddings 类的实例 两个方法
-                                    #embed_documents：把一组文档转成向量
-                                    #embed_query：把用户查询转成向量
+                                    #embeddings.embed_documents：把一组文档转成向量
+                                    #embeddings.embed_query：把用户查询转成向量
     model_name="BAAI/bge-small-zh-v1.5",
     model_kwargs={'device': 'cpu'},
     encode_kwargs={'normalize_embeddings': True}
 )
+
 #RAG（检索增强生成） 
 # 流程：
 # 文档 → 切 chunk  chunk = 文本片段（通常 200～500 字）

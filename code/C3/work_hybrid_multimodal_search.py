@@ -10,7 +10,8 @@ import cv2
 from PIL import Image
 from typing import List, Dict, Any
 from dataclasses import dataclass
-
+#构建一个龙类图像的多模态检索系统，能把图像和文本一起编码存储到 Milvus，
+# 然后支持多种检索模式（图像、文本、混合），并能对比和可视化不同检索效果。
 @dataclass
 class DragonImage:
     """龙类图像数据类"""

@@ -1,0 +1,5 @@
+HF_TOKEN = "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"
+
+setx HF_TOKEN "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" 设置 Hugging Face 的环境变量
+
+Get-ChildItem Env:   查看系统的环境变量
