@@ -10,7 +10,8 @@ import cv2
 from PIL import Image
 from typing import List, Dict, Any
 from dataclasses import dataclass
-
+#实现一个“龙类图像多模态检索系统”，
+# 支持图像、文本、图像+文本的相似度搜索，并能把结果拼接成可视化图像。
 @dataclass
 class DragonImage:
     """龙类图像数据类"""

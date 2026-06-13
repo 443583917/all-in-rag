@@ -137,3 +137,20 @@ print("===================")
 #collection.delete(expr='pk == "肖申克的救赎_1994"')
 #collection.flush()
 # 更新一般都是先复制再删除
+# 额外扩展 三种向量类型
+#FieldSchema(name="multimodal_vector", dtype=DataType.FLOAT_VECTOR, dim=multimodal_dim),
+#FieldSchema(name="text_sparse_vector", dtype=DataType.SPARSE_FLOAT_VECTOR),
+#FieldSchema(name="text_dense_vector", dtype=DataType.FLOAT_VECTOR, dim=dense_dim)
+# multimodal_vector是多模态类型向量 图像+文本描述搜索 使用
+# text_sparse_vector稀疏文本向量 关键词匹配能力  dtype=DataType.SPARSE_FLOAT 类型创建字段不需要dim
+# text_dense_vector 稠密文本向量 语意匹配
+# 企业项目中一般都是混合设计的
+# 生成文本的混合向量（稀疏+密集）text_embeddings = self.encoder.encode_text_hybrid(text_content)
+# text_sparse_vectors.append(text_embeddings['sparse']._getrow(0)) 稀疏文本向量
+# text_dense_vectors.append(text_embeddings['dense'][0]) 稠密文本向量
+# 一段文本content可以转换成稀疏+密集的混合向量
+# 在搜索时可以Hybrid Search：同时在稀疏和稠密向量上检索
+# search_params = {
+#    "sparse": {"field": "text_sparse_vector", "query": query_sparse_vec, "metric_type": "IP"},
+#    "dense": {"field": "text_dense_vector", "query": query_dense_vec, "metric_type": "COSINE"}
+#}

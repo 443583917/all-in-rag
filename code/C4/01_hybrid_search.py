@@ -7,14 +7,15 @@ from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 # 1. 初始化设置
 COLLECTION_NAME = "dragon_hybrid_demo"
 MILVUS_URI = "http://localhost:19530"  # 服务器模式
-DATA_PATH = "../../data/C4/metadata/dragon.json"  # 相对路径
+DATA_PATH = r"D:\GitHub\all-in-rag\data\C4\metadata\dragon.json"  # 相对路径
 BATCH_SIZE = 50
 
 # 2. 连接 Milvus 并初始化嵌入模型
 print(f"--> 正在连接到 Milvus: {MILVUS_URI}")
 connections.connect(uri=MILVUS_URI)
-
+# 和v2相比只有文本处理模型不同
 print("--> 正在初始化 BGE-M3 嵌入模型...")
+# 先下载好后指定路径
 ef = BGEM3EmbeddingFunction(use_fp16=False, device="cpu")
 print(f"--> 嵌入模型初始化完成。密集向量维度: {ef.dim['dense']}")
 
