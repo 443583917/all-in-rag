@@ -1,15 +1,16 @@
 import os
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from langchain_deepseek import ChatDeepSeek
+from langchain_openai import ChatOpenAI
 from langchain_core.runnables import RunnableBranch
 
-llm = ChatDeepSeek(
-    model="deepseek-chat", 
-    temperature=0, 
-    api_key=os.getenv("DEEPSEEK_API_KEY")
-    )
-
+llm = ChatOpenAI(
+    temperature=0.1,# 创造性
+    max_tokens=1000,# 最大输出 越小越快
+    model="mimo-v2-flash",
+    api_key="sk-ct6ct1y17ry3m9xh2rce3bbx68kbsqs19y326ym89hxw2k64",
+    base_url="https://api.xiaomimimo.com/v1",
+)
 # 1. 设置不同菜系的处理链
 sichuan_prompt = ChatPromptTemplate.from_template(
     "你是一位川菜大厨。请用正宗的川菜做法，回答关于「{question}」的问题。"

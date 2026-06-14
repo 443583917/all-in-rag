@@ -49,9 +49,12 @@ class SimpleText2SQLAgent:
         
         # 1. 从知识库检索
         print("检索知识库...")
+        # 这边是先从向量库中
         knowledge_results = self.knowledge_base.search(user_question, self.top_k_retrieval)
         print(f"检索到 {len(knowledge_results)} 条相关信息")
-        
+        # 上面限制死返回5条相关的向量其中3条是Q→SQL 一条ddl 一条描述。
+        # 如果都返回了Q→SQL不就无法使用了。所以必须让返回 一条ddl 一条描述。
+        # Q→SQL只是辅助示例只是帮助模型更快找到“类似问题的参考答案”
         # 2. 生成SQL
         print("生成SQL...")
         sql = self.sql_generator.generate_sql(user_question, knowledge_results)

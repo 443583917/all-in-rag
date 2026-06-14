@@ -1,14 +1,15 @@
 import os
 from langchain_openai import ChatOpenAI
 from langchain_community.document_loaders import BiliBiliLoader
-from langchain.chains.query_constructor.base import AttributeInfo
-from langchain.retrievers.self_query.base import SelfQueryRetriever
+from langchain_core.prompts import AttributeInfo
+from langchain_community.retrievers import SelfQueryRetriever
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 import logging
 
 logging.basicConfig(level=logging.INFO)
-
+# 加载 B 站视频 → 提取元数据 → 
+# 建立向量存储 → 配置元数据字段 → 构建自查询检索器 → 执行查询并输出结果。
 # 1. 初始化视频数据
 video_urls = [
     "https://www.bilibili.com/video/BV1Bo4y1A7FU", 
@@ -45,6 +46,7 @@ if not bili:
 
 # 2. 创建向量存储
 embed_model = HuggingFaceEmbeddings(model_name="BAAI/bge-small-zh-v1.5")
+#  Chroma 向量数据库的一个类方法，把文档直接转成向量并存入库。 结构由metadata决定的
 vectorstore = Chroma.from_documents(bili, embed_model)
 
 # 3. 配置元数据字段信息
@@ -83,7 +85,7 @@ llm = ChatOpenAI(
 retriever = SelfQueryRetriever.from_llm(
     llm=llm,
     vectorstore=vectorstore,
-    document_contents="记录视频标题、作者、观看次数等信息的视频元数据",
+    document_contents="记录视频标题、作者、观看次数等信息的视频元数据",#给大模型描述向量库中内容
     metadata_field_info=metadata_field_info,
     enable_limit=True,
     verbose=True

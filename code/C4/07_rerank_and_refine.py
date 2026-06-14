@@ -1,21 +1,33 @@
 import os
 from langchain_community.vectorstores import FAISS
-from langchain.retrievers import ContextualCompressionRetriever
-from langchain.retrievers.document_compressors import LLMChainExtractor
+from langchain_classic.retrievers import ContextualCompressionRetriever
+from langchain_classic.retrievers.document_compressors import LLMChainExtractor
 from langchain_community.embeddings import HuggingFaceBgeEmbeddings
-from langchain.text_splitter import RecursiveCharacterTextSplitter
+from langchain_text_splitters import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import TextLoader
-from langchain_deepseek import ChatDeepSeek
+from langchain_openai import ChatOpenAI
 
 # 导入ColBERT重排器需要的模块
-from langchain.retrievers.document_compressors.base import BaseDocumentCompressor
-from langchain.retrievers.document_compressors import DocumentCompressorPipeline
+from langchain_core.documents import BaseDocumentCompressor
+from langchain_classic.retrievers.document_compressors.base import  DocumentCompressorPipeline
 from langchain_core.documents import Document
 from typing import Sequence
 import torch
 from transformers import AutoTokenizer, AutoModel
 import torch.nn.functional as F
-
+# 使用千文代替自定义的ColBERT重排器
+from FlagEmbedding import FlagReranker
+# Pipeline RAG 指的是一种标准化的“检索增强生成”工作流，
+# 把数据处理和问答分成两个阶段：离线索引（Pipeline）+ 在线检索生成。
+# 它是最常见的 RAG 实现方式，强调用流水线式步骤把文档转化为向量并存储，
+# 再在用户提问时检索相关内容交给大模型生成答案
+# 其他还有 自然 rag,agent rag ，Hybrid(混合) RAG 
+# ===============================
+# Embedding 和 Reranker 的本质区别
+# Embedding 检索是「一句话 → 一个向量」然后和已有的向量进行 COSINE或者是IP算法进行比较获取
+# 返回的topk不一定是真正的topk(最相关数据排名)
+# 而Reranker Reranker负责排序 返回真正符合要求的前几条 使用Reranker的大模型处理
+# 在大模型Reranker后可以根据业务偏好需要再重新打分
 class ColBERTReranker(BaseDocumentCompressor):
     """ColBERT重排器"""
 
@@ -128,20 +140,72 @@ class ColBERTReranker(BaseDocumentCompressor):
         return reranked_docs
 
 
+class Qwen3Reranker(BaseDocumentCompressor):
+    """Qwen3-Reranker重排器"""
+
+    reranker: FlagReranker
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+
+        object.__setattr__(
+            self,
+            "reranker",
+            FlagReranker(
+                "Qwen/Qwen3-Reranker-0.6B",
+                use_fp16=True
+            )
+        )
+
+        print("Qwen3-Reranker加载完成")
+
+    def compress_documents(
+            self,
+            documents: Sequence[Document],
+            query: str,
+            callbacks=None,
+    ) -> Sequence[Document]:
+
+        if len(documents) == 0:
+            return documents
+
+        pairs = [
+            [query, doc.page_content]
+            for doc in documents
+        ]
+
+        scores = self.reranker.compute_score(pairs)
+
+        scored_docs = list(zip(documents, scores))
+        scored_docs.sort(
+            key=lambda x: x[1],
+            reverse=True
+        )
+
+        # 取Top5
+        reranked_docs = [
+            doc
+            for doc, _ in scored_docs[:5]
+        ]
+
+        return reranked_docs
+
 
 # 初始化配置
 hf_bge_embeddings = HuggingFaceBgeEmbeddings(
     model_name="BAAI/bge-large-zh-v1.5"
 )
 
-llm = ChatDeepSeek(
-    model="deepseek-chat", 
-    temperature=0.1, 
-    api_key=os.getenv("DEEPSEEK_API_KEY")
+llm = ChatOpenAI(
+    temperature=0.1,# 创造性
+    max_tokens=1000,# 最大输出 越小越快
+    model="mimo-v2-flash",
+    api_key="sk-ct6ct1y17ry3m9xh2rce3bbx68kbsqs19y326ym89hxw2k64",
+    base_url="https://api.xiaomimimo.com/v1",
 )
 
 # 1. 加载和处理文档
-loader = TextLoader("../../data/C4/txt/ai.txt", encoding="utf-8")
+loader = TextLoader(r"D:\GitHub\all-in-rag\data\C4\txt\ai.txt", encoding="utf-8")
 documents = loader.load()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100)
 docs = text_splitter.split_documents(documents)
@@ -151,9 +215,16 @@ vectorstore = FAISS.from_documents(docs, hf_bge_embeddings)
 base_retriever = vectorstore.as_retriever(search_kwargs={"k": 20})
 
 # 3. 设置ColBERT重排序器
+# 替换直接使用
+#reranker = Qwen3Reranker()
 reranker = ColBERTReranker()
 
-# 4. 设置LLM压缩器
+# 标准的压缩器写法
+# 4. 设置LLM压缩器 用大模型提取关键信息
+# 为什么要设计压缩器
+# 目的：提取关键信息，减少冗余。
+# 压缩的对象：检索到的文档内容。
+# 作用：在检索结果进入 LLM 前做“二次清洗”，保证上下文简洁且相关。
 compressor = LLMChainExtractor.from_llm(llm)
 
 # 5. 使用DocumentCompressorPipeline组装压缩管道
@@ -165,7 +236,7 @@ pipeline_compressor = DocumentCompressorPipeline(
 # 6. 创建最终的压缩检索器
 final_retriever = ContextualCompressionRetriever(
     base_compressor=pipeline_compressor,
-    base_retriever=base_retriever
+    base_retriever=base_retriever 
 )
 
 # 7. 执行查询并展示结果
@@ -175,12 +246,14 @@ print(f"查询: {query}\n")
 
 # 7.1 基础检索结果
 print(f"--- (1) 基础检索结果 (Top 20) ---")
+# base_retriever类型是(VectorStoreRetriever接口类型)提供了方法从向量库检索数据
 base_results = base_retriever.get_relevant_documents(query)
 for i, doc in enumerate(base_results):
     print(f"  [{i+1}] {doc.page_content[:100]}...\n")
 
 # 7.2 使用管道压缩器的最终结果
 print(f"\n--- (2) 管道压缩后结果 (ColBERT重排 + LLM压缩) ---")
+# final_retriever是ContextualCompressionRetriever(继承了base_retriever接口多了层重排压缩逻辑)
 final_results = final_retriever.get_relevant_documents(query)
 for i, doc in enumerate(final_results):
     print(f"  [{i+1}] {doc.page_content}\n")

@@ -1,18 +1,20 @@
 import os
 from typing import List, Dict, Any
-from langchain_deepseek import ChatDeepSeek
-from langchain.schema import HumanMessage, SystemMessage
+from langchain_openai import ChatOpenAI
+from langchain_core.messages import HumanMessage, SystemMessage
 
 
 class SimpleSQLGenerator:
     """简化的SQL生成器"""
     
     def __init__(self, api_key: str = None):
-        self.llm = ChatDeepSeek(
-            model="deepseek-chat",
-            temperature=0,
-            api_key=api_key or os.getenv("DEEPSEEK_API_KEY")
-        )
+        self.llm = ChatOpenAI(
+    temperature=0.1,# 创造性
+    max_tokens=1000,# 最大输出 越小越快
+    model="mimo-v2-flash",
+    api_key="sk-ct6ct1y17ry3m9xh2rce3bbx68kbsqs19y326ym89hxw2k64",
+    base_url="https://api.xiaomimimo.com/v1",
+)
     
     def generate_sql(self, user_query: str, knowledge_results: List[Dict[str, Any]]) -> str:
         """生成SQL语句"""

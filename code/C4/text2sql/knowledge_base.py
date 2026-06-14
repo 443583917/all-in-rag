@@ -4,14 +4,13 @@ from typing import List, Dict, Any
 from pymilvus import MilvusClient, FieldSchema, CollectionSchema, DataType
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
-
+# Text2SQL  让用户能用自然语言完成数据库查询
 class SimpleKnowledgeBase:
     """知识库"""
-    
     def __init__(self, milvus_uri: str = "http://localhost:19530"):
         self.milvus_uri = milvus_uri
         self.client = MilvusClient(uri=milvus_uri)
-        self.embedding_function = BGEM3EmbeddingFunction(use_fp16=False, device="cpu")
+        self.embedding_function = BGEM3EmbeddingFunction(model_name=r"D:\GitHub\bge-m3",use_fp16=False, device="cpu")
         self.collection_name = "text2sql_kb"
         self._setup_collection()
     
@@ -52,6 +51,11 @@ class SimpleKnowledgeBase:
     
     def load_data(self):
         """加载所有知识库数据"""
+        # 指的是围绕数据库结构和使用的“说明性信息
+        #主要有 DDL：建表语句，告诉系统有哪些表、字段、约束
+        #Q→SQL 示例：常见问题和对应 SQL，帮助模型学习如何写查询。
+        #表描述：字段的业务含义，比如 age 表示用户年龄，order_date 表示订单日期。
+        # 这些信息不是业务数据本身，而是 关于数据库的知识。
         data_dir = os.path.join(os.path.dirname(__file__), "data")
         
         # 加载DDL数据
@@ -78,22 +82,24 @@ class SimpleKnowledgeBase:
         # 加载集合到内存
         self.client.load_collection(collection_name=self.collection_name)
         print("知识库数据加载完成")
-    
+    #方法在上面使用了。
+    # 创建Text2SQL数据库时type字段的值有哪些类型就创建几个方法 一般都是3个DDL，Q→SQL，description
+    # 再加一个实际执行操作的方法
     def _add_ddl_data(self, data: List[Dict]):
         """添加DDL数据"""
         contents = []
         types = []
-        
+        # data是从ddl_examples.json读取的
         for item in data:
             content = f"表名: {item.get('table_name', '')}\n"
             content += f"DDL: {item.get('ddl_statement', '')}\n"
             content += f"描述: {item.get('description', '')}"
             
             contents.append(content)
-            types.append("ddl")
+            types.append("ddl")#都是type中存储 来说明这个数据是ddl数据类型
         
         self._insert_data(contents, types)
-    
+   
     def _add_qsql_data(self, data: List[Dict]):
         """添加Q->SQL数据"""
         contents = []
@@ -133,7 +139,8 @@ class SimpleKnowledgeBase:
         if not contents:
             return
         
-        # 生成嵌入
+        # 生成嵌入 
+        # 你要查询什么就为什么生成向量。这边是为每种type的content生成向量
         embeddings = self.embedding_function(contents)
         
         # 构建插入数据，每一行是一个字典
@@ -153,17 +160,19 @@ class SimpleKnowledgeBase:
     
     def search(self, query: str, top_k: int = 5) -> List[Dict[str, Any]]:
         """搜索相关内容"""
+        # 加载集合到内存 这个是必须的
+        # 如果不加载，集合数据不会进入内存，搜索时会报错或性能极差
         self.client.load_collection(collection_name=self.collection_name)
-            
+        #将问题转换为向量    
         query_embeddings = self.embedding_function([query])
         
         search_results = self.client.search(
             collection_name=self.collection_name,
-            data=query_embeddings["dense"],
-            anns_field="dense_vector",
-            search_params={"metric_type": "IP"},
+            data=query_embeddings["dense"],#指定为稠密搜索
+            anns_field="dense_vector",#要搜索的字段
+            search_params={"metric_type": "IP"},#搜索参数
             limit=top_k,
-            output_fields=["content", "type"]
+            output_fields=["content", "type"]#额外返回字段
         )
         
         results = []

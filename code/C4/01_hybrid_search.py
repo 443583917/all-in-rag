@@ -15,8 +15,10 @@ print(f"--> 正在连接到 Milvus: {MILVUS_URI}")
 connections.connect(uri=MILVUS_URI)
 # 和v2相比只有文本处理模型不同
 print("--> 正在初始化 BGE-M3 嵌入模型...")
+#==================================
+# bge-m3大模型使用来进行对应稀疏稠密向量生成
 # 先下载好后指定路径
-ef = BGEM3EmbeddingFunction(use_fp16=False, device="cpu")
+ef = BGEM3EmbeddingFunction(model_name=r"D:\GitHub\bge-m3",use_fp16=False, device="cpu")
 print(f"--> 嵌入模型初始化完成。密集向量维度: {ef.dim['dense']}")
 
 # 3. 创建 Collection

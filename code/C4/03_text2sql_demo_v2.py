@@ -249,7 +249,7 @@ class SimpleKnowledgeBase:
             formatted_results.append(result)
         
         return formatted_results
-    
+    # 向量检索失败（比如 Milvus 没启动、embedding 模型不可用），就调用 _fallback_search
     def _fallback_search(self, query: str, top_k: int) -> List[Dict[str, Any]]:
         """降级搜索方法（简单文本匹配）"""
         results = []

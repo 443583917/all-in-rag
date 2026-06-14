@@ -1,14 +1,20 @@
 import os
-from langchain_deepseek import ChatDeepSeek 
+from langchain_openai import ChatOpenAI
 from langchain_community.document_loaders import BiliBiliLoader
-from langchain.chains.query_constructor.base import AttributeInfo
+from langchain_core.prompts import AttributeInfo
 from openai import OpenAI
 from langchain_community.vectorstores import Chroma
 from langchain_huggingface import HuggingFaceEmbeddings
 import logging
 
 logging.basicConfig(level=logging.INFO)
-
+#流程
+#加载视频数据 → 提取元信息。
+#1.存入向量库 → 方便检索。
+#2.用户提问 → “时间最短的视频”。
+#3.LLM 转换 → 把自然语言转成 JSON 排序指令。
+#4.代码执行排序 → 根据 JSON 指令对视频列表排序。
+#5.返回结果 → 输出最符合条件的视频信息。
 # 1. 初始化视频数据
 video_urls = [
     "https://www.bilibili.com/video/BV1Bo4y1A7FU", 
@@ -72,9 +78,12 @@ metadata_field_info = [
 ]
 
 # 4. 初始化LLM客户端
-client = OpenAI(
-    base_url="https://api.deepseek.com",
-    api_key=os.getenv("DEEPSEEK_API_KEY")
+client = ChatOpenAI(
+    temperature=0.1,# 创造性
+    max_tokens=1000,# 最大输出 越小越快
+    model="mimo-v2-flash",
+    api_key="sk-ct6ct1y17ry3m9xh2rce3bbx68kbsqs19y326ym89hxw2k64",
+    base_url="https://api.xiaomimimo.com/v1",
 )
 
 # 5. 获取所有文档用于排序
@@ -111,7 +120,7 @@ JSON指令:"""
             {"role": "user", "content": prompt}
         ],
         temperature=0,
-        response_format={"type": "json_object"}
+        response_format={"type": "json_object"}#mimo不支持
     )
     
     try:

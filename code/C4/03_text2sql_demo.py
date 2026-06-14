@@ -14,10 +14,6 @@ def setup_demo():
     
     # 检查API密钥
     api_key = os.getenv("DEEPSEEK_API_KEY")
-    if not api_key:
-        print("先设置DEEPSEEK_API_KEY环境变量")
-        return None
-    
     # 创建演示数据库
     print("创建演示数据库...")
     db_path = create_demo_database()
@@ -144,7 +140,7 @@ def run_demo_queries(agent):
     print("\n开始运行演示查询...\n")
     
     success_count = 0
-    
+    # enumerate遍历方遍历demo_questions 起始索引设置从1开始默认0
     for i, question in enumerate(demo_questions, 1):
         print(f"问题 {i}: {question}")
         print("-" * 60)
