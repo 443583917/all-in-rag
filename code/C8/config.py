@@ -4,15 +4,15 @@ RAG系统配置文件
 
 from dataclasses import dataclass
 from typing import Dict, Any
-
+import os
 @dataclass
 class RAGConfig:
     """RAG系统配置类"""
 
     # 路径配置
-    data_path: str = "../../data/C8/cook"
-    index_save_path: str = "./vector_index"
-
+    data_path: str = r"D:\GitHub\all-in-rag\data\C8cook"
+    index_save_path: str = r"D:\GitHub\all-in-rag\code\C8\vector_index"
+    os.makedirs(index_save_path, exist_ok=True)
     # 模型配置
     embedding_model: str = "BAAI/bge-small-zh-v1.5"
     llm_model: str = "kimi-k2-0711-preview"

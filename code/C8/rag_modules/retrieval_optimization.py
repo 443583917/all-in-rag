@@ -33,7 +33,7 @@ class RetrievalOptimizationModule:
 
         # 向量检索器
         self.vector_retriever = self.vectorstore.as_retriever(
-            search_type="similarity",
+            search_type="similarity",#表示用 相似度搜索 默认就是这个
             search_kwargs={"k": 5}
         )
 
@@ -105,7 +105,7 @@ class RetrievalOptimizationModule:
                     break
         
         return filtered_docs
-
+    #多检索器结果融合算法
     def _rrf_rerank(self, vector_docs: List[Document], bm25_docs: List[Document], k: int = 60) -> List[Document]:
         """
         使用RRF (Reciprocal Rank Fusion) 算法重排文档

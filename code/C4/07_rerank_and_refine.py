@@ -211,6 +211,8 @@ text_splitter = RecursiveCharacterTextSplitter(chunk_size=500, chunk_overlap=100
 docs = text_splitter.split_documents(documents)
 
 # 2. 创建向量存储和基础检索器
+# vectorstore检索器 基于向量相似度检索，把 query 转 embedding，在向量数据库里找最相似的文档。
+# 适合语义搜索
 vectorstore = FAISS.from_documents(docs, hf_bge_embeddings)
 base_retriever = vectorstore.as_retriever(search_kwargs={"k": 20})
 

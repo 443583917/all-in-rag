@@ -2,7 +2,7 @@ import os
 import asyncio
 from llama_index.core import VectorStoreIndex, SimpleDirectoryReader, Settings
 from llama_index.core.node_parser import SentenceWindowNodeParser, SentenceSplitter
-from llama_index.llms.deepseek import DeepSeek
+from langchain_openai import ChatOpenAI
 from llama_index.embeddings.huggingface import HuggingFaceEmbedding
 from llama_index.core.postprocessor import MetadataReplacementPostProcessor
 from llama_index.core.evaluation import (
@@ -13,7 +13,13 @@ from llama_index.core.evaluation import (
 from llama_index.core.evaluation.eval_utils import get_results_df
 from llama_index.core.evaluation import DatasetGenerator, QueryResponseDataset
 
-Settings.llm = DeepSeek(model="deepseek-chat", temperature=0.1, api_key=os.getenv("DEEPSEEK_API_KEY"))
+Settings.llm = ChatOpenAI(
+    temperature=0.1,# 创造性
+    max_tokens=1000,# 最大输出 越小越快
+    model="mimo-v2-flash",
+    api_key="sk-ct6ct1y17ry3m9xh2rce3bbx68kbsqs19y326ym89hxw2k64",
+    base_url="https://api.xiaomimimo.com/v1",
+)
 Settings.embed_model = HuggingFaceEmbedding(model_name="BAAI/bge-small-en")
 
 async def main():
